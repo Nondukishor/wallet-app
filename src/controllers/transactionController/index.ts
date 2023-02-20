@@ -1,13 +1,13 @@
 import { CustomContext } from "../../types/globalTypes";
-import { ScanCommand, GetItemCommand, DeleteItemCommand } from "@aws-sdk/client-dynamodb"
-import {marshall} from "@aws-sdk/util-dynamodb"
+import { ScanCommand, GetItemCommand, DeleteItemCommand, AttributeValue, ScanCommandOutput } from "@aws-sdk/client-dynamodb"
+import {marshall, unmarshall} from "@aws-sdk/util-dynamodb"
 import { convertDynamoDBFormat } from "../../utils/responseParser";
-import { BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { BatchWriteCommand, BatchWriteCommandOutput, ScanCommandInput } from "@aws-sdk/lib-dynamodb";
 
 export default class TransectionController {
   tableName:string;
   constructor(){
-    this.tableName="transaction"
+    this.tableName="wallets"
   }
   /**
    * This is a member function of transaction controller
@@ -17,21 +17,18 @@ export default class TransectionController {
    **/
   async getAll(ctx: CustomContext): Promise<void> {
     try {
-      const params = {
+
+      const params:ScanCommandInput = {
         "TableName": this.tableName
       }
-      
-      const command = new ScanCommand(params)
+      const command:ScanCommand = new ScanCommand(params)
 
-      const results = await ctx.state.dynamodb.send(command)
+      const results: ScanCommandOutput = await ctx.connection.send(command)
 
       if(results){
-         const transactionsData = results.Items?.map(convertDynamoDBFormat)
-         ctx.status=200
-         ctx.message="Fetch successfully"
-         ctx.body = {
-          transactions:transactionsData 
-        }}
+         const transactionsData = results.Items.map((item)=>unmarshall(item))
+         ctx.body=transactionsData
+        }
     } catch (error:any) {
        ctx.body = error
     }
@@ -61,8 +58,8 @@ export default class TransectionController {
         }
       };
 
-      const fromData = await ctx.state.dynamodb.send(new GetItemCommand(params1))
-      const toData = await ctx.state.dynamodb.send(new GetItemCommand(params2))
+      const fromData = await ctx.connection.send(new GetItemCommand(params1))
+      const toData = await ctx.connection.send(new GetItemCommand(params2))
       if(body && fromData?.Item?.balance.S){
        
         if(fromData?.Item?.balance.S >= body?.amount){
@@ -82,7 +79,7 @@ export default class TransectionController {
                       balance:netBalance.toFixed(2),
                       todayBalanceChange: fromData.Item?.todayBalanceChange?.L?.push(body.amount || 0)
                     },
-                    ReturnValues: 'PUTED_NEW'
+                  
                   }
                 },
                 {
@@ -92,7 +89,7 @@ export default class TransectionController {
                       balance: (exsitingBalance + parseFloat(body.amount)).toFixed(2),
                       todayBalanceChange: toData.Item?.todayBalanceChange?.L?.push(body.amount || 0)
                     },
-                    ReturnValues: 'PUTED_NEW'
+                
                   }
                 }
               ]
@@ -100,9 +97,9 @@ export default class TransectionController {
           };
 
 
-        const command = new BatchWriteCommand(params)
+        const command:BatchWriteCommand  = new BatchWriteCommand(params)
 
-        const result =  await ctx.state.dynamodb.send(command)
+        const result: BatchWriteCommandOutput =  await ctx.connection.send(command)
         ctx.body=result
 
         }
@@ -124,7 +121,7 @@ export default class TransectionController {
       "TableName": "transactions",
         "Key": marshall({id: id})
     }
-    const result = await ctx.state.dynamodb.send(new DeleteItemCommand(params))
+    const result = await ctx.connection.send(new DeleteItemCommand(params))
     console.log(result)
     ctx.body=result
   }

@@ -5,12 +5,24 @@
     "@aws-sdk/types": "3.53.0",
     "@aws-sdk/util-dynamodb": "^3.272.0",
     "@types/dotenv": "^8.2.0",
+    "@typescript-eslint/eslint-plugin": "^5.52.0",
+    "@typescript-eslint/parser": "^5.52.0",
     "aws-sdk": "^2.1318.0",
     "dotenv": "^16.0.3",
+    "eslint": "^8.34.0",
+    "eslint-config-koa": "^2.0.2",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-n": "^15.6.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "eslint-plugin-standard": "^5.0.0",
+    "eslint-plugin-unused-imports": "^2.0.0",
     "koa": "^2.14.1",
     "koa-bodyparser": "^4.3.0",
     "koa-compose": "^4.1.0",
     "koa-router": "^12.0.0",
+    "prettier": "^2.8.4",
     "uuid": "^9.0.0"
   },
   "name": "wallet-app",
@@ -44,7 +56,11 @@
     "start": "nodemon build/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "test": "jest",
-    "test:cover": "jest --coverage"
+    "test:cover": "jest --coverage",
+    "lint": "eslint .",
+    "lint:fix": "next lint --dir . --fix",
+    "format": "prettier --check ./src",
+    "format:fix": "prettier --write ./src"
   },
   "keywords": [
     "koaJs"

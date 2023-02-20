@@ -3,10 +3,11 @@ import {
   GetItemCommand,
   PutItemCommand,
   PutItemCommandInput,
+  ScanCommandOutput,
   DeleteItemCommand,
   ScanCommand,
 } from "@aws-sdk/client-dynamodb";
-import { marshall } from "@aws-sdk/util-dynamodb";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { convertDynamoDBFormat } from "../../utils/responseParser";
 import { v4 as uuidv4 } from "uuid";
 import { ScanCommandInput } from "@aws-sdk/client-dynamodb";
@@ -23,17 +24,14 @@ export default class WalletController {
       const params: ScanCommandInput = {
         TableName: "wallets",
       };
-      const command = new ScanCommand(params);
-      const results = await ctx.state.dynamodb.send(command);
+      const command:ScanCommand = new ScanCommand(params);
 
-      console.log(results);
+      const results:ScanCommandOutput = await ctx.connection.send(command);
 
       if (results) ctx.status = 200;
       ctx.message = "Fetch successfully";
       ctx.body = {
-        wallets: results?.Items?.map(convertDynamoDBFormat)
-          .sort((a, b) => b.createAt - a.createAt)
-          .reverse(),
+        wallets: results?.Items.map(item=>unmarshall(item))
       };
     } catch (error: any) {
       ctx.body = error;
@@ -56,7 +54,7 @@ export default class WalletController {
         },
       };
       const command = new GetItemCommand(params);
-      const result = await ctx.state.dynamodb.send(command);
+      const result = await ctx.connection.send(command);
       const wallet = convertDynamoDBFormat(result.Item);
       ctx.body = wallet;
     } catch (error) {
@@ -86,7 +84,7 @@ export default class WalletController {
         }),
       };
 
-      const created = await ctx.state.dynamodb.send(new PutItemCommand(params));
+      const created = await ctx.connection.send(new PutItemCommand(params));
       if (created)
         ctx.apiResponse({
           message: "Created successfully",
@@ -115,7 +113,7 @@ export default class WalletController {
       Key: marshall({ id: id }),
     };
     const command = new DeleteItemCommand(params);
-    const result = await ctx.state.dynamodb.send(command);
+    const result = await ctx.connection.send(command);
     ctx.body = result;
   }
 

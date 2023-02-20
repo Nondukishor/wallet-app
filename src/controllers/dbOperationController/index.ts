@@ -9,7 +9,7 @@ export default class TableOperationController {
         "TableName": ctx.params.name
       }
 
-      const results = await ctx.state.dynamodb.send(new DeleteTableCommand(params))
+      const results = await ctx.connection.send(new DeleteTableCommand(params))
        
       ctx.body=results
     } catch (error:any) {
@@ -36,7 +36,7 @@ export default class TableOperationController {
         }
       }
 
-      const results = await ctx.state.dynamodb.send(new DeleteItemCommand(params))
+      const results = await ctx.connection.send(new DeleteItemCommand(params))
        
       ctx.body=results
     } catch (error:any) {

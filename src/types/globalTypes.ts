@@ -11,8 +11,9 @@ export interface IResponseSyntex {
 }
 
 export interface CustomContext extends Context{
+   sendResponse:(statusCode: number, data: any) => void;
+   connection: DynamoDBDocumentClient;
    state:{
-    dynamodb: DynamoDBDocumentClient;
     parseResponse?: (item: { [key: string]: AttributeValue } | undefined)=>any,
    }
 }
