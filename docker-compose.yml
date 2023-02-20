@@ -1,0 +1,30 @@
+version: '3.6'
+services:
+  dynamodb:
+    image: amazon/dynamodb-local
+    ports:
+      - "8000:8000"
+    volumes:
+      - data:/data
+    restart: always
+  app:
+    tty: true
+    build: .
+    environment:
+      NODE_ENV: development
+      DYNAMODB_ENDPOINT: http://localhost:8000
+      DYNAMODB_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: '26xbe'
+      AWS_SECRET_ACCESS_KEY: '32woh'
+    ports:
+      - "4000:4000"
+    depends_on:
+      - dynamodb
+    networks:
+      - custom_network
+
+networks:
+  custom_network:
+
+volumes:
+  data:
