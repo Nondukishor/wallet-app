@@ -11,7 +11,9 @@ const walletRoutes = new koa_router_1.default({
 //New instance from walletcontroller
 const wallets = new walletController_1.default();
 //all routes
-walletRoutes.get("/", wallets.getAll);
+walletRoutes.get("/", (ctx) => {
+    ctx.body = "Hi";
+});
 walletRoutes.get("/:id", wallets.getById);
 walletRoutes.post("/", wallets.store);
 walletRoutes.patch("/:id", wallets.update);

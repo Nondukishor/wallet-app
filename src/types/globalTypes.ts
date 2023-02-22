@@ -1,20 +1,25 @@
-import {Context, Next } from "koa";
-import {AttributeValue} from '@aws-sdk/client-dynamodb'
-import {DynamoDBDocumentClient} from '@aws-sdk/lib-dynamodb'
+import { BaseContext } from "koa";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-
+/**
+ * @param response param for response.
+ * @param response.message message for response.
+ * @param response.code status code for api response.
+ * @param response.body response data
+ * @param response.status response status hint "error, success, warn, uknown"
+ * @param key response data key if you want to change unless it will show the default boy key for response
+ **/
 export interface IResponseSyntex {
-    code?: number;
-    message: string,
-    data?: any,
-    status: "success" | "error" | "unknown"
+  code: number;
+  message: string;
+  body?: any;
+  key?: string;
+  status?: "success" | "error" | "warn" | "unkown";
 }
 
-export interface CustomContext extends Context{
-   sendResponse:(statusCode: number, data: any) => void;
-   connection: DynamoDBDocumentClient;
-   state:{
-    parseResponse?: (item: { [key: string]: AttributeValue } | undefined)=>any,
-   }
+declare module "koa" {
+  interface BaseContext {
+    sendResponse: (response: IResponseSyntex) => void;
+    connection: DynamoDBDocumentClient;
+  }
 }
-

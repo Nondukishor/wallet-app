@@ -4,15 +4,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const koa_compose_1 = __importDefault(require("koa-compose"));
-/**
- * Compose multiple instances of koa-router
- * into a single `use`-able middleware.
- *
- * @param  routers
- * @return Function
- */
 function combineRouters(routers) {
     return () => {
+        if (!Array.isArray(routers)) {
+            routers = [...arguments];
+        }
         const middleware = [];
         routers.forEach(router => {
             middleware.push(router.routes());

@@ -1,6 +1,8 @@
 FROM node:18-alpine
 
-WORKDIR /app
+WORKDIR /home/app/
+
+RUN apk add --no-cache --update python3 python3-dev git jq
 
 COPY package*.json ./
 
@@ -12,4 +14,5 @@ ENV NODE_ENV=development
 
 EXPOSE 4000
 
-CMD ["npm", "run" , "dev"]
+
+CMD ["npm","run", "dev"]

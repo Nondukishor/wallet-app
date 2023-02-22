@@ -1,12 +1,11 @@
-import dotenv from 'dotenv'
-import path from 'path'
+import dotenv from "dotenv";
+import path from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { IConfig } from './types';
-
+import { IConfig } from "./types";
 
 dotenv.config({
-  path:`${path.resolve(__dirname, '../../.env.development')}`
+  path: `${path.resolve(__dirname, "../../.env.development")}`,
 });
 
 const marshallOptions = {
@@ -23,30 +22,28 @@ const unmarshallOptions = {
   wrapNumbers: false, // false, by default.
 };
 
+const translateConfig = { marshallOptions, unmarshallOptions };
 
-export const client = new DynamoDBClient({
+const dbconfig = {
   endpoint: process.env.DYNAMODB_ENDPOINT,
   region: process.env.DYNAMODB_REGION,
-  credentials:{
+  credentials: {
     accessKeyId: process.env.ACCESS_KEY_ID || "",
     secretAccessKey: process.env.SECRET_ACCESS_KEY || "",
   },
-})
+};
 
-export const ddbDocClient = DynamoDBDocumentClient.from(client,{
-  marshallOptions,
-  unmarshallOptions
-})
+export const client = new DynamoDBClient(dbconfig);
+// client.middlewareStack.add(retryMiddleware);
+export const ddbDocClient = DynamoDBDocumentClient.from(client, translateConfig);
 
-
-
-const config:IConfig = {
+const config: IConfig = {
   PORT: process.env.PORT || 4000,
-  connection: ddbDocClient
-}
+  connection: ddbDocClient,
+};
 
 //config object freeze so that nobody can change it.
 
-Object.freeze(config)
+Object.freeze(config);
 
-export default config
+export default config;

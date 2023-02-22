@@ -1,13 +1,22 @@
-import { CustomContext } from "../../types/globalTypes";
-import { ScanCommand, GetItemCommand, DeleteItemCommand, AttributeValue, ScanCommandOutput } from "@aws-sdk/client-dynamodb"
-import {marshall, unmarshall} from "@aws-sdk/util-dynamodb"
-import { convertDynamoDBFormat } from "../../utils/responseParser";
-import { BatchWriteCommand, BatchWriteCommandOutput, ScanCommandInput } from "@aws-sdk/lib-dynamodb";
+import {
+  ScanCommand,
+  GetItemCommand,
+  BatchWriteItemCommand,
+  ScanCommandOutput,
+} from "@aws-sdk/client-dynamodb";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
+
+import {
+  BatchWriteCommandInput,
+  BatchWriteCommandOutput,
+  ScanCommandInput,
+} from "@aws-sdk/lib-dynamodb";
+import { Context } from "koa";
 
 export default class TransectionController {
-  tableName:string;
-  constructor(){
-    this.tableName="wallets"
+  tableName: string;
+  constructor() {
+    this.tableName = "wallets";
   }
   /**
    * This is a member function of transaction controller
@@ -15,26 +24,23 @@ export default class TransectionController {
    * @param ctx
    * @returns Promise
    **/
-  async getAll(ctx: CustomContext): Promise<void> {
+  async getAll(ctx: Context): Promise<void> {
     try {
+      const params: ScanCommandInput = {
+        TableName: this.tableName,
+      };
+      const command: ScanCommand = new ScanCommand(params);
 
-      const params:ScanCommandInput = {
-        "TableName": this.tableName
+      const results: ScanCommandOutput = await ctx.connection.send(command);
+
+      if (results) {
+        const transactionsData = results.Items.map((item) => unmarshall(item));
+        ctx.body = transactionsData;
       }
-      const command:ScanCommand = new ScanCommand(params)
-
-      const results: ScanCommandOutput = await ctx.connection.send(command)
-
-      if(results){
-         const transactionsData = results.Items.map((item)=>unmarshall(item))
-         ctx.body=transactionsData
-        }
-    } catch (error:any) {
-       ctx.body = error
+    } catch (error: any) {
+      ctx.body = error;
     }
   }
-
-  
 
   /**
    * This is a member function of transaction controller
@@ -42,98 +48,83 @@ export default class TransectionController {
    * @param ctx
    * @returns Promise
    **/
-  async store(ctx: CustomContext): Promise<void> {
+  async store(ctx: Context): Promise<void> {
     try {
-      const body:any = ctx.request.body
+      const body: any = ctx.request.body;
       const params1 = {
-        TableName: "wallets", 
+        TableName: "wallets",
         Key: {
-          id: {S: body.from}
-        }
+          id: { S: body.from },
+        },
       };
+
       const params2 = {
-        TableName: "wallets", 
+        TableName: "wallets",
         Key: {
-          id: {S: body.to}
-        }
+          id: { S: body.to },
+        },
       };
 
-      const fromData = await ctx.connection.send(new GetItemCommand(params1))
-      const toData = await ctx.connection.send(new GetItemCommand(params2))
-      if(body && fromData?.Item?.balance.S){
-       
-        if(fromData?.Item?.balance.S >= body?.amount){
-          const mainBalance:string = fromData?.Item?.balance.S
+      const fromData = await ctx.connection.send(new GetItemCommand(params1));
 
-          const netBalance:number = (parseFloat(mainBalance) - parseFloat(body?.amount))
+      const toData = await ctx.connection.send(new GetItemCommand(params2));
 
-          const exsitingBalance: number = toData?.Item?.balance.S ? parseFloat(toData?.Item?.balance.S) : 0
+      const parseFromData = unmarshall(fromData.Item, {
+        wrapNumbers: true,
+      });
+      const parseToData = unmarshall(toData.Item);
 
-          const params = {
+      if (body && parseFromData?.balance) {
+        if (parseFromData.balance >= body?.amount) {
+          const mainBalance: string = parseFromData?.balance;
+
+          const netBalance: number = parseFloat(mainBalance) - parseFloat(body?.amount);
+          const exsitingBalance: number = parseToData?.balance
+            ? parseFloat(parseToData.balance)
+            : 0;
+          const amount = parseFloat(body.amount).toFixed(2);
+
+          console.log(parseFromData.todayBalanceChange);
+
+          const params: BatchWriteCommandInput = {
             RequestItems: {
               wallets: [
                 {
                   PutRequest: {
-                    Item: {
-                      ...convertDynamoDBFormat(fromData.Item),
-                      balance:netBalance.toFixed(2),
-                      todayBalanceChange: fromData.Item?.todayBalanceChange?.L?.push(body.amount || 0)
-                    },
-                  
-                  }
+                    Item: marshall({
+                      ...parseFromData,
+                      balance: netBalance.toFixed(2),
+                      todayBalanceChange: Array.isArray(parseFromData?.todayBalanceChange)
+                        ? parseFromData?.todayBalanceChange?.push(amount || 0)
+                        : [amount],
+                    }),
+                  },
                 },
                 {
                   PutRequest: {
-                    Item: {
-                      ...convertDynamoDBFormat(toData.Item),
-                      balance: (exsitingBalance + parseFloat(body.amount)).toFixed(2),
-                      todayBalanceChange: toData.Item?.todayBalanceChange?.L?.push(body.amount || 0)
-                    },
-                
-                  }
-                }
-              ]
-            }
+                    Item: marshall({
+                      ...parseToData,
+                      balance: parseFloat(exsitingBalance + amount).toFixed(2),
+                      todayBalanceChange: Array.isArray(parseToData?.todayBalanceChange)
+                        ? parseToData?.todayBalanceChange?.push(amount || 0)
+                        : [amount],
+                    }),
+                  },
+                },
+              ],
+            },
           };
 
+          const command: BatchWriteItemCommand = new BatchWriteItemCommand(params);
 
-        const command:BatchWriteCommand  = new BatchWriteCommand(params)
+          const result: BatchWriteCommandOutput = await ctx.connection.send(command);
 
-        const result: BatchWriteCommandOutput =  await ctx.connection.send(command)
-        ctx.body=result
-
+          ctx.body = result;
         }
       }
     } catch (error) {
-      ctx.body= error
+      console.log(error);
+      ctx.body = error;
     }
-  }
-
-  /**
-   * This is a member function of transaction controller
-   * This function will return a object of transaction after delte a object from database
-   * @param ctx
-   * @returns Promise
-   **/
-  async destory(ctx: CustomContext): Promise<void> {
-    const { id } = ctx.params;
-    const params = {
-      "TableName": "transactions",
-        "Key": marshall({id: id})
-    }
-    const result = await ctx.connection.send(new DeleteItemCommand(params))
-    console.log(result)
-    ctx.body=result
-  }
-
-  /**
-   * This is a member function of transaction controller
-   * This function will return a object of transaction after update a object in database
-   * @param ctx
-   * @returns Promise
-   **/
-  async update(ctx: CustomContext): Promise<void> {
-    const { id } = ctx.params;
-    ctx.body = "store function";
   }
 }

@@ -10,7 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_dynamodb_1 = require("@aws-sdk/client-dynamodb");
-const config_1 = require("../../config");
+const util_dynamodb_1 = require("@aws-sdk/util-dynamodb");
+const responseParser_1 = require("../../utils/responseParser");
+const uuid_1 = require("uuid");
 class WalletController {
     /**
      * This is a member function of wallet controller
@@ -22,13 +24,18 @@ class WalletController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const params = {
-                    "TableName": "wallets",
+                    TableName: "wallets",
                 };
-                const results = yield config_1.client.send(new client_dynamodb_1.ScanCommand(params));
-                ctx.body = results.Items;
+                const command = new client_dynamodb_1.ScanCommand(params);
+                const results = yield ctx.connection.send(command);
+                if (results)
+                    ctx.status = 200;
+                ctx.message = "Fetch successfully";
+                ctx.body = {
+                    wallets: results === null || results === void 0 ? void 0 : results.Items.map(item => (0, util_dynamodb_1.unmarshall)(item))
+                };
             }
             catch (error) {
-                console.log(error);
                 ctx.body = error;
             }
         });
@@ -41,8 +48,22 @@ class WalletController {
      **/
     getById(ctx) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { id } = ctx.params;
-            ctx.body = id;
+            try {
+                const { id } = ctx.params;
+                const params = {
+                    TableName: "wallets",
+                    Key: {
+                        id: { S: id },
+                    },
+                };
+                const command = new client_dynamodb_1.GetItemCommand(params);
+                const result = yield ctx.connection.send(command);
+                const wallet = (0, responseParser_1.convertDynamoDBFormat)(result.Item);
+                ctx.body = wallet;
+            }
+            catch (error) {
+                ctx.body = error;
+            }
         });
     }
     /**
@@ -53,16 +74,35 @@ class WalletController {
      **/
     store(ctx) {
         return __awaiter(this, void 0, void 0, function* () {
-            const params = {
-                "TableName": "transection",
-                "Item": {
-                    "id": { "N": "12" },
-                    "name": { "S": "Nipu" },
-                    "changebalance": { "N": "12" }
-                }
-            };
-            const body = ctx.request.body;
-            ctx.body = body;
+            try {
+                const body = ctx.request.body;
+                const params = {
+                    TableName: "wallets",
+                    Item: (0, util_dynamodb_1.marshall)({
+                        id: (0, uuid_1.v4)(),
+                        name: body.name,
+                        currency: body.currency,
+                        balance: body.initialBalance,
+                        todayBalanceChange: [],
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                    }),
+                };
+                const created = yield ctx.connection.send(new client_dynamodb_1.PutItemCommand(params));
+                if (created)
+                    ctx.body = {
+                        message: "Created successfully",
+                        status: "success",
+                        code: 201,
+                    };
+            }
+            catch (error) {
+                ctx.body = {
+                    message: "Ocurred Error",
+                    status: "error",
+                    code: 500,
+                };
+            }
         });
     }
     /**
@@ -74,7 +114,13 @@ class WalletController {
     destory(ctx) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = ctx.params;
-            ctx.body = "store function";
+            const params = {
+                TableName: "wallets",
+                Key: (0, util_dynamodb_1.marshall)({ id: id }),
+            };
+            const command = new client_dynamodb_1.DeleteItemCommand(params);
+            const result = yield ctx.connection.send(command);
+            ctx.body = result;
         });
     }
     /**
@@ -86,7 +132,7 @@ class WalletController {
     update(ctx) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = ctx.params;
-            ctx.body = "store function";
+            ctx.body = "";
         });
     }
 }

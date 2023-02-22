@@ -20,3 +20,4 @@ class BaseController {
         throw new Error("Method not implemented.");
     }
 }
+exports.default = BaseController;
