@@ -4,7 +4,7 @@ WORKDIR /home/app/
 
 COPY package*.json ./
 
-RUN npm install -g npm@latest
+# RUN npm install -g npm@latest
 
 RUN npm install
 
@@ -14,7 +14,6 @@ ENV NODE_ENV=development
 
 EXPOSE 4000
 
-EXPOSE 8000
-
+RUN npm run createtable
 
 CMD ["npm","run", "dev"]

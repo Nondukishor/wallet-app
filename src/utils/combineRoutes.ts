@@ -1,5 +1,5 @@
-import Router, { IMiddleware } from 'koa-router'
-import compose from 'koa-compose'
+import Router, { IMiddleware } from "koa-router";
+import compose from "koa-compose";
 /**
  * Compose multiple instances of koa-router
  * into a single `use`-able middleware.
@@ -8,20 +8,22 @@ import compose from 'koa-compose'
  * @return Function
  */
 
-type Middleware = IMiddleware<any>
+type Middleware = IMiddleware<any>;
 
-export default function combineRouters(routers:Array<Router>) {
+export default function combineRouters(routers: Array<Router>) {
   return () => {
     if (!Array.isArray(routers)) {
-      routers = [...arguments]
+      routers = [...arguments];
     }
-    const middleware:Middleware[] = []
+    const middleware: Middleware[] = [];
 
-    routers.forEach(router => {
-      middleware.push(router.routes())
-      middleware.push(router.allowedMethods())
-    })
+    routers.forEach((router) => {
+      middleware.push(router.routes());
+      middleware.push(router.allowedMethods());
+    });
 
-    return compose(middleware)
-  }
+    const composed = compose(middleware);
+
+    return composed;
+  };
 }

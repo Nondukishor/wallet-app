@@ -1,24 +1,12 @@
-import {
-  ScanCommand,
-  GetItemCommand,
-  BatchWriteItemCommand,
-  ScanCommandOutput,
-} from "@aws-sdk/client-dynamodb";
+import { GetItemCommand, BatchWriteItemCommand } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-
 import { BatchWriteCommandInput, BatchWriteCommandOutput } from "@aws-sdk/lib-dynamodb";
 import { Context } from "koa";
 import Wallet from "../../model/Wallet/Wallet";
 
 export default class TransectionController {
-  model: Wallet;
-  constructor() {
-    this.model = new Wallet();
-  }
+  public model = new Wallet();
 
-  sayHi() {
-    return "Hi";
-  }
   /**
    * This is a member function of transaction controller
    * This function will return a array object of transaction
@@ -27,9 +15,10 @@ export default class TransectionController {
    **/
   async getAll(ctx: Context): Promise<void> {
     try {
-      const result = await new Wallet().find();
+      const result = this.model.getTableName();
 
       console.log(result);
+
       ctx.sendResponse({
         message: "success",
         code: 200,
@@ -48,7 +37,7 @@ export default class TransectionController {
       // }
     } catch (error: any) {
       console.log(error);
-      ctx.body = error;
+      ctx.body = error.message;
     }
   }
 

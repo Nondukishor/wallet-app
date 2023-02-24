@@ -1,4 +1,13 @@
 {
+  "name": "wallet-app",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "keywords": [
+    "koaJs"
+  ],
+  "author": "Nipu Chakraborty",
+  "license": "ISC",
+  "description": "On board learning task",
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.272.0",
     "@aws-sdk/lib-dynamodb": "3.208.0",
@@ -30,9 +39,6 @@
     "prettier": "^2.8.4",
     "uuid": "^9.0.0"
   },
-  "name": "wallet-app",
-  "version": "1.0.0",
-  "main": "build/index.js",
   "devDependencies": {
     "@babel/core": "^7.20.12",
     "@babel/preset-env": "^7.20.2",
@@ -57,20 +63,52 @@
   "scripts": {
     "docker:build": "docker build -t wallet-app .",
     "docker:compose": "docker-compose up -d",
+    "createtable": "node ./src/config/db/create-wallet-table.js",
     "build": "npx tsc",
     "start": "nodemon build/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "test": "jest",
+    "test": "jest --detectOpenHandles",
     "test:cover": "jest --coverage",
     "lint": "eslint .",
     "lint:fix": "next lint --dir . --fix",
     "format": "prettier --check ./src",
     "format:fix": "prettier --write ./src"
   },
-  "keywords": [
-    "koaJs"
-  ],
-  "author": "Nipu Chakraborty",
-  "license": "ISC",
-  "description": "On board learning task"
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "jsx",
+      "json",
+      "ts",
+      "tsx"
+    ],
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "**/*.{ts,js}",
+      "!**/node_modules/**",
+      "!**/build/**",
+      "!**/coverage/**"
+    ],
+    "transform": {
+      "\\.ts$": "<rootDir>/node_modules/ts-jest"
+    },
+    "coverageThreshold": {
+      "global": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
+      }
+    },
+    "coverageReporters": [
+      "text",
+      "text-summary"
+    ],
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(js|ts)x?$",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/build/",
+      "/coverage/"
+    ]
+  }
 }

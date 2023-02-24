@@ -24,17 +24,18 @@ export class Model {
   constructor() {
     this.tableName = pluralize(this.constructor.name);
     this.client = config.connection;
+    this.getTableName = this.getTableName.bind(this);
   }
 
-  getTableName(): string {
+  public getTableName = (): string => {
     return this.tableName;
-  }
+  };
 
-  setTableName(tableName: string) {
+  public setTableName = (tableName: string) => {
     return (this.tableName = tableName);
-  }
+  };
 
-  async find(): Promise<Record<string, AttributeValue>[] | any> {
+  find = async (): Promise<Record<string, AttributeValue>[] | any> => {
     try {
       const params: ScanCommandInput = {
         TableName: this.tableName,
@@ -45,9 +46,9 @@ export class Model {
     } catch (error: any) {
       return error;
     }
-  }
+  };
 
-  async findById(id: string): Promise<Record<string, AttributeValue>> {
+  findById = async (id: string): Promise<Record<string, AttributeValue>> => {
     const params = {
       TableName: this.tableName,
       Key: marshall({
@@ -57,18 +58,18 @@ export class Model {
     const command = new GetItemCommand(params);
     const result = await this.client.send(command);
     return unmarshall(result.Item);
-  }
+  };
 
-  async create(item: any) {
+  create = async (item: any) => {
     const params = {
       TableName: this.tableName,
       Item: item,
     };
     const command = new PutItemCommand(params);
     return await this.client.send(command);
-  }
+  };
 
-  async update(id: string, updatedvalue: Record<string, any>) {
+  update = async (id: string, updatedvalue: Record<string, any>) => {
     const keys = Object.keys(updatedvalue);
     const params = {
       TableName: this.tableName,
@@ -83,9 +84,9 @@ export class Model {
     const command = new UpdateItemCommand(params);
     const result = await this.client.send(command);
     return result.Attributes;
-  }
+  };
 
-  async deleteItem(id: string) {
+  deleteItem = async (id: string) => {
     const params = {
       TableName: this.tableName,
       Key: marshall({
@@ -97,7 +98,7 @@ export class Model {
     const result = await this.client.send(command);
 
     return result;
-  }
+  };
 }
 
 export default Model;

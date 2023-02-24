@@ -6,7 +6,7 @@ import {
   DeleteItemCommand,
   ScanCommand,
 } from "@aws-sdk/client-dynamodb";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
+import { marshall } from "@aws-sdk/util-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { ScanCommandInput } from "@aws-sdk/client-dynamodb";
 import { Context } from "koa";
@@ -121,6 +121,7 @@ export default class WalletController {
           code: 201,
         };
     } catch (error: unknown) {
+      console.log(error);
       ctx.body = {
         message: "Ocurred Error",
         status: "error",

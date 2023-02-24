@@ -82,6 +82,4 @@ app.use(router());
  ************************************/
 
 //server start
-app.listen(config.PORT, async () => {
-  console.log(`server is running on port http://localhost:${config.PORT} `);
-});
+export default app.listen(config.PORT);
