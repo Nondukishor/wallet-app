@@ -26,15 +26,14 @@ const translateConfig = { marshallOptions, unmarshallOptions };
 
 const dbconfig = {
   endpoint: process.env.DYNAMODB_ENDPOINT,
-  region: process.env.DYNAMODB_REGION,
+  region: process.env.DYNAMODB_ENDPOINT,
   credentials: {
-    accessKeyId: process.env.ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.SECRET_ACCESS_KEY || "",
+    accessKeyId: process.env.ACCESS_KEY_ID,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY,
   },
 };
 
-export const client = new DynamoDBClient(dbconfig);
-// client.middlewareStack.add(retryMiddleware);
+export const client = new DynamoDBClient({ ...dbconfig });
 export const ddbDocClient = DynamoDBDocumentClient.from(client, translateConfig);
 
 const config: IConfig = {

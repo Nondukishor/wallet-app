@@ -6,17 +6,18 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
-import {
-  BatchWriteCommandInput,
-  BatchWriteCommandOutput,
-  ScanCommandInput,
-} from "@aws-sdk/lib-dynamodb";
+import { BatchWriteCommandInput, BatchWriteCommandOutput } from "@aws-sdk/lib-dynamodb";
 import { Context } from "koa";
+import Wallet from "../../model/Wallet/Wallet";
 
 export default class TransectionController {
-  tableName: string;
+  model: Wallet;
   constructor() {
-    this.tableName = "wallets";
+    this.model = new Wallet();
+  }
+
+  sayHi() {
+    return "Hi";
   }
   /**
    * This is a member function of transaction controller
@@ -26,18 +27,27 @@ export default class TransectionController {
    **/
   async getAll(ctx: Context): Promise<void> {
     try {
-      const params: ScanCommandInput = {
-        TableName: this.tableName,
-      };
-      const command: ScanCommand = new ScanCommand(params);
+      const result = await new Wallet().find();
 
-      const results: ScanCommandOutput = await ctx.connection.send(command);
-
-      if (results) {
-        const transactionsData = results.Items.map((item) => unmarshall(item));
-        ctx.body = transactionsData;
-      }
+      console.log(result);
+      ctx.sendResponse({
+        message: "success",
+        code: 200,
+        status: "success",
+        body: result,
+        key: "wallets",
+      });
+      // const params: ScanCommandInput = {
+      //   TableName: this.model.getTableName(),
+      // };
+      // const command: ScanCommand = new ScanCommand(params);
+      // const results: ScanCommandOutput = await ctx.connection.send(command);
+      // if (results) {
+      //   const transactionsData = results.Items.map((item) => unmarshall(item));
+      //   ctx.body = transactionsData;
+      // }
     } catch (error: any) {
+      console.log(error);
       ctx.body = error;
     }
   }

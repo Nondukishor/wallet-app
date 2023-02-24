@@ -1,10 +1,11 @@
 version: '3.8'
 services:
-  dynamodb-local:
+  dynamodb:
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
     image: "amazon/dynamodb-local:latest"
-    container_name: dynamodb-local
+    container_name: dynamodb
     environment: 
+      DYNAMODB_ENDPOINT: http://0.0.0.0:8000
       DYNAMODB_REGION: local
       AWS_ACCESS_KEY_ID: ''
       AWS_SECRET_ACCESS_KEY: ''
@@ -14,25 +15,27 @@ services:
       - "./docker/dynamodb:/home/dynamodblocal/data"
     working_dir: /home/dynamodblocal
     restart: always
-
   app:
     tty: true
     working_dir: /home/app
     build: .
     environment:
       NODE_ENV: development
-      DYNAMODB_ENDPOINT: http://localhost:8000
+      DYNAMODB_ENDPOINT: http://0.0.0.0:8000
       DYNAMODB_REGION: local
       AWS_ACCESS_KEY_ID: ''
       AWS_SECRET_ACCESS_KEY: ''
     ports:
       - "4000:4000"
     depends_on:
-      - dynamodb-local
+      - dynamodb
+    links:
+      - dynamodb
     networks:
-      - custom_network
+      - my_network
 networks:
-  custom_network:
+  my_network:
+    driver: bridge
 
 volumes:
  data:

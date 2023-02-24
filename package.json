@@ -6,7 +6,9 @@
     "@aws-sdk/middleware-stack": "^3.272.0",
     "@aws-sdk/types": "3.53.0",
     "@aws-sdk/util-dynamodb": "^3.272.0",
+    "@koa/cors": "^4.0.0",
     "@types/dotenv": "^8.2.0",
+    "@types/koa__cors": "^3.3.1",
     "@typescript-eslint/eslint-plugin": "^5.52.0",
     "@typescript-eslint/parser": "^5.52.0",
     "aws-sdk": "^2.1318.0",
@@ -68,7 +70,7 @@
   "keywords": [
     "koaJs"
   ],
-  "author": "",
+  "author": "Nipu Chakraborty",
   "license": "ISC",
-  "description": ""
+  "description": "On board learning task"
 }

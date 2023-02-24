@@ -9,6 +9,7 @@ import router from "./routes";
 import config from "./config";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { IResponseSyntex } from "./types/globalTypes";
+import cors from "@koa/cors";
 /*
  **********************************************
  **All nessary module modules import end here**
@@ -71,8 +72,8 @@ app.context.connection = config.connection;
  ************************************/
 
 //body parser
+app.use(cors());
 app.use(bodyparser());
-
 //route middleware
 app.use(router());
 
