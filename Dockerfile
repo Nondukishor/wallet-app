@@ -6,7 +6,8 @@ COPY package*.json ./
 
 # RUN npm install -g npm@latest
 
-RUN npm install
+
+RUN npm i --silent
 
 COPY . .
 
@@ -14,6 +15,6 @@ ENV NODE_ENV=development
 
 EXPOSE 4000
 
-RUN npm run createtable
+RUN npm run dynamo:createtable
 
 CMD ["npm","run", "dev"]

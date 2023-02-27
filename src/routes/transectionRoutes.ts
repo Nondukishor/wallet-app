@@ -10,6 +10,7 @@ const transaction = new TransectionController();
 
 //all routes
 transactionRoutes.get("/", transaction.getAll);
-transactionRoutes.post("/", transaction.store);
+transactionRoutes.post("/", transaction.transfer);
+transactionRoutes.get("/today", transaction.todaysTransaction);
 
 export default transactionRoutes;

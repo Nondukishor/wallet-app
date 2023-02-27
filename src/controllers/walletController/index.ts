@@ -5,10 +5,12 @@ import {
   ScanCommandOutput,
   DeleteItemCommand,
   ScanCommand,
+  GetItemCommandInput,
+  ScanCommandInput,
+  UpdateItemCommand,
 } from "@aws-sdk/client-dynamodb";
-import { marshall } from "@aws-sdk/util-dynamodb";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { v4 as uuidv4 } from "uuid";
-import { ScanCommandInput } from "@aws-sdk/client-dynamodb";
 import { Context } from "koa";
 
 export default class WalletController {
@@ -27,15 +29,17 @@ export default class WalletController {
 
       const results: ScanCommandOutput = await ctx.connection.send(command);
 
-      if (results) ctx.status = 200;
-      ctx.message = "Fetch successfully";
-      ctx.sendResponse({
-        message: "Fetch successfully",
-        code: 200,
-        body: results.Items,
-        key: "wallets",
-        status: "success",
-      });
+      if (results) {
+        ctx.status = 200;
+        ctx.message = "Fetch successfully";
+        ctx.sendResponse({
+          message: "Fetch successfully",
+          code: 200,
+          body: results.Items,
+          key: "wallets",
+          status: "success",
+        });
+      }
     } catch (error: any) {
       ctx.body = error;
     }
@@ -49,16 +53,20 @@ export default class WalletController {
    **/
   async getById(ctx: Context) {
     try {
-      const { id } = ctx.params;
-      const params = {
+      const { id, name } = ctx.params;
+
+      const params: GetItemCommandInput = {
         TableName: "wallets",
         Key: marshall({
-          id: { S: id },
+          id: id,
+          name: name,
         }),
       };
 
       const command = new GetItemCommand(params);
+
       const result = await ctx.connection.send(command);
+
       if (!result.Item) {
         ctx.throw(404);
       }
@@ -87,18 +95,6 @@ export default class WalletController {
   async store(ctx: Context) {
     try {
       const body: any = ctx.request.body;
-
-      console.log(
-        marshall({
-          id: uuidv4(),
-          name: body.name,
-          currency: body.currency,
-          balance: body.initialBalance,
-          todayBalanceChange: [],
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        })
-      );
       const params: PutItemCommandInput = {
         TableName: "wallets",
         Item: marshall({
@@ -106,27 +102,29 @@ export default class WalletController {
           name: body.name,
           currency: body.currency,
           balance: body.initialBalance,
-          todayBalanceChange: [],
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
+          todayBalanceChange: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         }),
       };
 
       const created = await ctx.connection.send(new PutItemCommand(params));
 
       if (created)
-        ctx.body = {
+        ctx.sendResponse({
           message: "Created successfully",
           status: "success",
           code: 201,
-        };
+          body: created.Attributes || {},
+          key: "wallet",
+        });
     } catch (error: unknown) {
       console.log(error);
-      ctx.body = {
+      ctx.sendResponse({
         message: "Ocurred Error",
+        code: ctx.status || 500,
         status: "error",
-        code: 500,
-      };
+      });
     }
   }
 
@@ -137,14 +135,39 @@ export default class WalletController {
    * @returns Promise
    **/
   async destory(ctx: Context) {
-    const { id } = ctx.params;
-    const params = {
-      TableName: "wallets",
-      Key: marshall({ id: id }),
-    };
-    const command = new DeleteItemCommand(params);
-    const result = await ctx.connection.send(command);
-    ctx.body = result;
+    try {
+      const { id, name } = ctx.params;
+      const params = {
+        TableName: "wallets",
+        Key: marshall({
+          id: id,
+          name: name,
+        }),
+      };
+
+      const command = new DeleteItemCommand(params);
+
+      const deleted = await ctx.connection.send(command);
+
+      if (deleted) {
+        ctx.sendResponse({
+          message: "Deleted successfully",
+          code: deleted.$metadata.httpStatusCode || 202,
+          body: {},
+          key: "data",
+        });
+      } else {
+        throw new Error("Item cannot deleted successfully");
+      }
+    } catch (error: any) {
+      console.log(error);
+      ctx.sendResponse({
+        message: error.message || "Occured a error",
+        code: ctx.status || 500,
+        body: error,
+        key: "error",
+      });
+    }
   }
 
   /**
@@ -154,7 +177,51 @@ export default class WalletController {
    * @returns Promise
    **/
   async update(ctx: Context) {
-    const { id } = ctx.params;
-    ctx.body = "";
+    const { id, name } = ctx.params;
+    const body: any = ctx.request.body;
+
+    const params = {
+      TableName: "wallets",
+      Key: marshall({
+        id: id,
+        name: name,
+      }),
+      UpdateExpression:
+        "SET #name = :name, #balance = :balance, #todayBalanceChange = :todayBalanceChange, #updatedAt = :updatedAt",
+      ExpressionAttributeValues: marshall({
+        ":name": body.name,
+        ":balance": body.balance,
+        ":todayBalanceChange": body.todayBalanceChange,
+        ":updatedAt": new Date().toISOString(),
+      }),
+      ExpressionAttributeNames: {
+        "#name": "name",
+        "#balance": "balance",
+        "#todayBalanceChange": "todayBalanceChange",
+        "#updatedAt": "updatedAt",
+      },
+
+      ReturnValues: "UPDATED_NEW",
+    };
+
+    try {
+      const command = new UpdateItemCommand(params);
+
+      const result = await ctx.connection.send(command);
+
+      ctx.sendResponse({
+        message: "Updated successfully",
+        code: result.$metadata.httpStatusCode,
+        body: result.Attributes,
+        key: "wallet",
+      });
+    } catch (error: any) {
+      ctx.sendResponse({
+        message: "Updated successfully",
+        code: error.message,
+        body: error,
+        key: "error",
+      });
+    }
   }
 }

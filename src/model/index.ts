@@ -38,7 +38,8 @@ export class Model {
   find = async (): Promise<Record<string, AttributeValue>[] | any> => {
     try {
       const params: ScanCommandInput = {
-        TableName: this.tableName,
+        TableName: "transactions",
+        ConsistentRead: false,
       };
       const command: ScanCommand = new ScanCommand(params);
       const result: ScanCommandOutput = await this.client.send(command);

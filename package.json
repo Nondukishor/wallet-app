@@ -63,7 +63,9 @@
   "scripts": {
     "docker:build": "docker build -t wallet-app .",
     "docker:compose": "docker-compose up -d",
-    "createtable": "node ./src/config/db/create-wallet-table.js",
+    "createwallettable": "node ./src/config/db/create-wallet-table.js",
+    "createtransactiontable": "node ./src/config/db/create-transaction-table.js",
+    "dynamo:createtable": "npm run createwallettable && npm run createtransactiontable",
     "build": "npx tsc",
     "start": "nodemon build/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",

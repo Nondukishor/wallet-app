@@ -9,26 +9,26 @@ const client = new DynamoDBClient({
   },
 });
 
-const wallets = {
-  TableName: "wallets",
+const transactions = {
+  TableName: "transactions",
   KeySchema: [
     {
-      AttributeName: "id",
+      AttributeName: "to",
       KeyType: "HASH",
     },
     {
-      AttributeName: "name",
+      AttributeName: "from",
       KeyType: "RANGE",
     },
   ],
   BillingMode: "PROVISIONED",
   AttributeDefinitions: [
     {
-      AttributeName: "id",
+      AttributeName: "to",
       AttributeType: "S",
     },
     {
-      AttributeName: "name",
+      AttributeName: "from",
       AttributeType: "S",
     },
   ],
@@ -39,6 +39,6 @@ const wallets = {
 };
 
 client
-  .send(new CreateTableCommand(wallets))
-  .then(() => console.log(`${wallets.TableName} created successfully`))
+  .send(new CreateTableCommand(transactions))
+  .then(() => console.log(`${transactions.TableName} created successfully`))
   .catch((error) => console.log(`Table cannot create error`, error));

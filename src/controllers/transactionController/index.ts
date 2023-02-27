@@ -1,11 +1,17 @@
-import { GetItemCommand, BatchWriteItemCommand } from "@aws-sdk/client-dynamodb";
+import {
+  GetItemCommand,
+  PutItemCommand,
+  PutItemCommandOutput,
+  UpdateItemCommand,
+  ScanCommand,
+  ScanCommandInput,
+  ScanCommandOutput,
+} from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import { BatchWriteCommandInput, BatchWriteCommandOutput } from "@aws-sdk/lib-dynamodb";
 import { Context } from "koa";
-import Wallet from "../../model/Wallet/Wallet";
 
 export default class TransectionController {
-  public model = new Wallet();
+  constructor() {}
 
   /**
    * This is a member function of transaction controller
@@ -13,117 +19,169 @@ export default class TransectionController {
    * @param ctx
    * @returns Promise
    **/
-  async getAll(ctx: Context): Promise<void> {
+  getAll = async (ctx: Context): Promise<void> => {
     try {
-      const result = this.model.getTableName();
+      const params: ScanCommandInput = {
+        TableName: "transactions",
+        ConsistentRead: false,
+      };
 
-      console.log(result);
+      const command: ScanCommand = new ScanCommand(params);
+      const results: ScanCommandOutput = await ctx.connection.send(command);
 
       ctx.sendResponse({
-        message: "success",
+        message: "Transaction data succcessfully loaded",
         code: 200,
         status: "success",
-        body: result,
-        key: "wallets",
+        body: results.Items,
+        key: "transactions",
       });
-      // const params: ScanCommandInput = {
-      //   TableName: this.model.getTableName(),
-      // };
-      // const command: ScanCommand = new ScanCommand(params);
-      // const results: ScanCommandOutput = await ctx.connection.send(command);
-      // if (results) {
-      //   const transactionsData = results.Items.map((item) => unmarshall(item));
-      //   ctx.body = transactionsData;
-      // }
     } catch (error: any) {
       console.log(error);
-      ctx.body = error.message;
-    }
-  }
-
-  /**
-   * This is a member function of transaction controller
-   * This function will return a object of transaction after store a object in database
-   * @param ctx
-   * @returns Promise
-   **/
-  async store(ctx: Context): Promise<void> {
-    try {
-      const body: any = ctx.request.body;
-      const params1 = {
-        TableName: "wallets",
-        Key: {
-          id: { S: body.from },
-        },
-      };
-
-      const params2 = {
-        TableName: "wallets",
-        Key: {
-          id: { S: body.to },
-        },
-      };
-
-      const fromData = await ctx.connection.send(new GetItemCommand(params1));
-
-      const toData = await ctx.connection.send(new GetItemCommand(params2));
-
-      const parseFromData = unmarshall(fromData.Item, {
-        wrapNumbers: true,
+      ctx.sendResponse({
+        message: error || "Unkown error occured",
+        code: ctx.status || 500,
+        status: "error",
+        body: error,
+        key: "error",
       });
-      const parseToData = unmarshall(toData.Item);
+    }
+  };
 
-      if (body && parseFromData?.balance) {
-        if (parseFromData.balance >= body?.amount) {
-          const mainBalance: string = parseFromData?.balance;
+  transfer = async (ctx: Context) => {
+    const body: any = ctx.request.body;
+    console.log(body);
 
-          const netBalance: number = parseFloat(mainBalance) - parseFloat(body?.amount);
-          const exsitingBalance: number = parseToData?.balance
-            ? parseFloat(parseToData.balance)
-            : 0;
-          const amount = parseFloat(body.amount).toFixed(2);
+    const fromParams = {
+      TableName: "wallets",
+      Key: marshall({
+        id: body.from.id,
+        name: body.from.name,
+      }),
+    };
 
-          console.log(parseFromData.todayBalanceChange);
+    const fromData = await ctx.connection.send(new GetItemCommand(fromParams));
 
-          const params: BatchWriteCommandInput = {
-            RequestItems: {
-              wallets: [
-                {
-                  PutRequest: {
-                    Item: marshall({
-                      ...parseFromData,
-                      balance: netBalance.toFixed(2),
-                      todayBalanceChange: Array.isArray(parseFromData?.todayBalanceChange)
-                        ? parseFromData?.todayBalanceChange?.push(amount || 0)
-                        : [amount],
-                    }),
-                  },
-                },
-                {
-                  PutRequest: {
-                    Item: marshall({
-                      ...parseToData,
-                      balance: parseFloat(exsitingBalance + amount).toFixed(2),
-                      todayBalanceChange: Array.isArray(parseToData?.todayBalanceChange)
-                        ? parseToData?.todayBalanceChange?.push(amount || 0)
-                        : [amount],
-                    }),
-                  },
-                },
-              ],
+    const parseFromData = unmarshall(fromData.Item, {
+      wrapNumbers: true,
+    });
+
+    if (body && parseFromData?.balance) {
+      if (parseFromData.balance >= body?.amount) {
+        const params1 = {
+          TableName: "wallets",
+          Key: marshall(
+            {
+              id: body.from.id,
+              name: body.from.name,
             },
-          };
+            { removeUndefinedValues: true }
+          ),
+          UpdateExpression:
+            "SET #balance = #balance - :balance, #todayBalanceChange = #todayBalanceChange - :todayBalanceChange",
+          ExpressionAttributeValues: marshall(
+            {
+              ":balance": parseFloat(body.amount),
+              ":todayBalanceChange": parseFloat(body.amount),
+            },
+            { removeUndefinedValues: false }
+          ),
+          ExpressionAttributeNames: {
+            "#balance": "balance",
+            "#todayBalanceChange": "todayBalanceChange",
+          },
+          ReturnValues: "ALL_NEW",
+        };
 
-          const command: BatchWriteItemCommand = new BatchWriteItemCommand(params);
+        const params2 = {
+          TableName: "wallets",
+          Key: marshall(
+            {
+              id: body.to.id,
+              name: body.to.name,
+            },
+            { removeUndefinedValues: true }
+          ),
+          UpdateExpression:
+            "SET #balance = #balance + :balance, #todayBalanceChange = #todayBalanceChange + :todayBalanceChange",
+          ExpressionAttributeValues: marshall(
+            {
+              ":balance": parseFloat(body.amount),
+              ":todayBalanceChange": parseFloat(body.amount),
+            },
+            { removeUndefinedValues: false }
+          ),
+          ExpressionAttributeNames: {
+            "#balance": "balance",
+            "#todayBalanceChange": "todayBalanceChange",
+          },
+          ReturnValues: "ALL_NEW",
+        };
 
-          const result: BatchWriteCommandOutput = await ctx.connection.send(command);
-
-          ctx.body = result;
+        try {
+          const isSend = await ctx.connection.send(new UpdateItemCommand(params1));
+          if (isSend) {
+            const isRecived = await ctx.connection.send(new UpdateItemCommand(params2));
+            if (isRecived) {
+              const params = {
+                TableName: "transactions",
+                Item: marshall({
+                  to: `wallet#${body.to.id}`,
+                  from: `wallet#${body.from.id}`,
+                  amount: body.amount,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                }),
+              };
+              const created: PutItemCommandOutput = await ctx.connection.send(
+                new PutItemCommand(params)
+              );
+              if (created) {
+                ctx.status = 201;
+                ctx.sendResponse({
+                  message: "Transfered successfully",
+                  code: 201,
+                  status: "success",
+                  body: {},
+                });
+              }
+            }
+          }
+        } catch (error) {
+          ctx.sendResponse({
+            message: error.message || "Unknown error occured",
+            code: ctx.status || 500,
+            status: "success",
+            body: error,
+            key: "error",
+          });
         }
       }
-    } catch (error) {
-      console.log(error);
-      ctx.body = error;
     }
-  }
+  };
+
+  todaysTransaction = async (ctx: Context) => {
+    const today = new Date().toISOString().substring(0, 10);
+    const params = {
+      TableName: "transactions",
+      ConsistentRead: false,
+      FilterExpression: "contains(#createdAt, :createdAt)",
+      ExpressionAttributeValues: marshall({
+        ":createdAt": today,
+      }),
+      ExpressionAttributeNames: {
+        "#createdAt": "createdAt",
+      },
+    };
+
+    const command: ScanCommand = new ScanCommand(params);
+    const results: ScanCommandOutput = await ctx.connection.send(command);
+
+    ctx.sendResponse({
+      message: "Today's transaction generated",
+      code: 200,
+      body: results.Items,
+      key: "transactions",
+    });
+  };
 }

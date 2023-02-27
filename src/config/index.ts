@@ -22,8 +22,6 @@ const unmarshallOptions = {
   wrapNumbers: false, // false, by default.
 };
 
-const translateConfig = { marshallOptions, unmarshallOptions };
-
 const dbconfig = {
   endpoint: process.env.DYNAMODB_ENDPOINT,
   region: process.env.DYNAMODB_ENDPOINT,
@@ -33,8 +31,11 @@ const dbconfig = {
   },
 };
 
-export const client = new DynamoDBClient({ ...dbconfig });
-export const ddbDocClient = DynamoDBDocumentClient.from(client, translateConfig);
+export const client = new DynamoDBClient(dbconfig);
+export const ddbDocClient = DynamoDBDocumentClient.from(client, {
+  marshallOptions,
+  unmarshallOptions,
+});
 
 const config: IConfig = {
   PORT: process.env.PORT || 4000,

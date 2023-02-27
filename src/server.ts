@@ -82,4 +82,6 @@ app.use(router());
  ************************************/
 
 //server start
-export default app.listen(config.PORT);
+export default app.listen(config.PORT, () =>
+  console.log(`Server is running http://locahost:${config.PORT}`)
+);
