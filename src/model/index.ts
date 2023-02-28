@@ -6,17 +6,17 @@ import {
   ScanCommand,
   ScanCommandInput,
   ScanCommandOutput,
-  UpdateItemCommand,
-} from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import config from "../config";
+  UpdateItemCommand
+} from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import config from '../config';
 import {
   convertToExpressionAttributeNames,
   convertToExpressionAttributeValues,
   convertToExpressionUpdateExpression,
-  pluralize,
-} from "../utils";
+  pluralize
+} from '../utils';
 
 export class Model {
   private tableName: string;
@@ -38,8 +38,8 @@ export class Model {
   find = async (): Promise<Record<string, AttributeValue>[] | any> => {
     try {
       const params: ScanCommandInput = {
-        TableName: "transactions",
-        ConsistentRead: false,
+        TableName: 'transactions',
+        ConsistentRead: false
       };
       const command: ScanCommand = new ScanCommand(params);
       const result: ScanCommandOutput = await this.client.send(command);
@@ -53,8 +53,8 @@ export class Model {
     const params = {
       TableName: this.tableName,
       Key: marshall({
-        id,
-      }),
+        id
+      })
     };
     const command = new GetItemCommand(params);
     const result = await this.client.send(command);
@@ -64,7 +64,7 @@ export class Model {
   create = async (item: any) => {
     const params = {
       TableName: this.tableName,
-      Item: item,
+      Item: item
     };
     const command = new PutItemCommand(params);
     return await this.client.send(command);
@@ -75,12 +75,12 @@ export class Model {
     const params = {
       TableName: this.tableName,
       Key: marshall({
-        id,
+        id
       }),
       UpdateExpression: convertToExpressionUpdateExpression(keys),
       ExpressionAttributeNames: convertToExpressionAttributeNames(keys),
       ExpressionAttributeValues: convertToExpressionAttributeValues(updatedvalue),
-      ReturnValues: "ALL_NEW",
+      ReturnValues: 'ALL_NEW'
     };
     const command = new UpdateItemCommand(params);
     const result = await this.client.send(command);
@@ -91,8 +91,8 @@ export class Model {
     const params = {
       TableName: this.tableName,
       Key: marshall({
-        id,
-      }),
+        id
+      })
     };
 
     const command = new DeleteItemCommand(params);

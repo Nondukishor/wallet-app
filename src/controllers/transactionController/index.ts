@@ -2,15 +2,15 @@ import {
   GetItemCommand,
   PutItemCommand,
   PutItemCommandOutput,
-  UpdateItemCommand,
   ScanCommand,
   ScanCommandInput,
   ScanCommandOutput,
-} from "@aws-sdk/client-dynamodb";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import { Context } from "koa";
+  UpdateItemCommand
+} from '@aws-sdk/client-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { Context } from 'koa';
 
-export default class TransectionController {
+export default class TransactionController {
   constructor() {}
 
   /**
@@ -22,28 +22,28 @@ export default class TransectionController {
   getAll = async (ctx: Context): Promise<void> => {
     try {
       const params: ScanCommandInput = {
-        TableName: "transactions",
-        ConsistentRead: false,
+        TableName: 'transactions',
+        ConsistentRead: false
       };
 
       const command: ScanCommand = new ScanCommand(params);
       const results: ScanCommandOutput = await ctx.connection.send(command);
 
       ctx.sendResponse({
-        message: "Transaction data succcessfully loaded",
+        message: 'Transaction data successfully loaded',
         code: 200,
-        status: "success",
+        status: 'success',
         body: results.Items,
-        key: "transactions",
+        key: 'transactions'
       });
     } catch (error: any) {
       console.log(error);
       ctx.sendResponse({
-        message: error || "Unkown error occured",
+        message: error || 'Unknown error occurs',
         code: ctx.status || 500,
-        status: "error",
+        status: 'error',
         body: error,
-        key: "error",
+        key: 'error'
       });
     }
   };
@@ -53,69 +53,69 @@ export default class TransectionController {
     console.log(body);
 
     const fromParams = {
-      TableName: "wallets",
+      TableName: 'wallets',
       Key: marshall({
         id: body.from.id,
-        name: body.from.name,
-      }),
+        name: body.from.name
+      })
     };
 
     const fromData = await ctx.connection.send(new GetItemCommand(fromParams));
 
     const parseFromData = unmarshall(fromData.Item, {
-      wrapNumbers: true,
+      wrapNumbers: true
     });
 
     if (body && parseFromData?.balance) {
       if (parseFromData.balance >= body?.amount) {
         const params1 = {
-          TableName: "wallets",
+          TableName: 'wallets',
           Key: marshall(
             {
               id: body.from.id,
-              name: body.from.name,
+              name: body.from.name
             },
             { removeUndefinedValues: true }
           ),
           UpdateExpression:
-            "SET #balance = #balance - :balance, #todayBalanceChange = #todayBalanceChange - :todayBalanceChange",
+            'SET #balance = #balance - :balance, #todayBalanceChange = #todayBalanceChange - :todayBalanceChange',
           ExpressionAttributeValues: marshall(
             {
-              ":balance": parseFloat(body.amount),
-              ":todayBalanceChange": parseFloat(body.amount),
+              ':balance': parseFloat(body.amount),
+              ':todayBalanceChange': parseFloat(body.amount)
             },
             { removeUndefinedValues: false }
           ),
           ExpressionAttributeNames: {
-            "#balance": "balance",
-            "#todayBalanceChange": "todayBalanceChange",
+            '#balance': 'balance',
+            '#todayBalanceChange': 'todayBalanceChange'
           },
-          ReturnValues: "ALL_NEW",
+          ReturnValues: 'ALL_NEW'
         };
 
         const params2 = {
-          TableName: "wallets",
+          TableName: 'wallets',
           Key: marshall(
             {
               id: body.to.id,
-              name: body.to.name,
+              name: body.to.name
             },
             { removeUndefinedValues: true }
           ),
           UpdateExpression:
-            "SET #balance = #balance + :balance, #todayBalanceChange = #todayBalanceChange + :todayBalanceChange",
+            'SET #balance = #balance + :balance, #todayBalanceChange = #todayBalanceChange + :todayBalanceChange',
           ExpressionAttributeValues: marshall(
             {
-              ":balance": parseFloat(body.amount),
-              ":todayBalanceChange": parseFloat(body.amount),
+              ':balance': parseFloat(body.amount),
+              ':todayBalanceChange': parseFloat(body.amount)
             },
             { removeUndefinedValues: false }
           ),
           ExpressionAttributeNames: {
-            "#balance": "balance",
-            "#todayBalanceChange": "todayBalanceChange",
+            '#balance': 'balance',
+            '#todayBalanceChange': 'todayBalanceChange'
           },
-          ReturnValues: "ALL_NEW",
+          ReturnValues: 'ALL_NEW'
         };
 
         try {
@@ -124,14 +124,14 @@ export default class TransectionController {
             const isRecived = await ctx.connection.send(new UpdateItemCommand(params2));
             if (isRecived) {
               const params = {
-                TableName: "transactions",
+                TableName: 'transactions',
                 Item: marshall({
                   to: `wallet#${body.to.id}`,
                   from: `wallet#${body.from.id}`,
                   amount: body.amount,
                   createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                }),
+                  updatedAt: new Date().toISOString()
+                })
               };
               const created: PutItemCommandOutput = await ctx.connection.send(
                 new PutItemCommand(params)
@@ -139,21 +139,21 @@ export default class TransectionController {
               if (created) {
                 ctx.status = 201;
                 ctx.sendResponse({
-                  message: "Transfered successfully",
+                  message: 'Transfered successfully',
                   code: 201,
-                  status: "success",
-                  body: {},
+                  status: 'success',
+                  body: {}
                 });
               }
             }
           }
         } catch (error) {
           ctx.sendResponse({
-            message: error.message || "Unknown error occured",
+            message: error.message || 'Unknown error occured',
             code: ctx.status || 500,
-            status: "success",
+            status: 'success',
             body: error,
-            key: "error",
+            key: 'error'
           });
         }
       }
@@ -163,15 +163,15 @@ export default class TransectionController {
   todaysTransaction = async (ctx: Context) => {
     const today = new Date().toISOString().substring(0, 10);
     const params = {
-      TableName: "transactions",
+      TableName: 'transactions',
       ConsistentRead: false,
-      FilterExpression: "contains(#createdAt, :createdAt)",
+      FilterExpression: 'contains(#createdAt, :createdAt)',
       ExpressionAttributeValues: marshall({
-        ":createdAt": today,
+        ':createdAt': today
       }),
       ExpressionAttributeNames: {
-        "#createdAt": "createdAt",
-      },
+        '#createdAt': 'createdAt'
+      }
     };
 
     const command: ScanCommand = new ScanCommand(params);
@@ -181,7 +181,7 @@ export default class TransectionController {
       message: "Today's transaction generated",
       code: 200,
       body: results.Items,
-      key: "transactions",
+      key: 'transactions'
     });
   };
 }

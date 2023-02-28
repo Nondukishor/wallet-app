@@ -1,5 +1,5 @@
-import { BaseContext } from "koa";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+// import { BaseContext } from 'koa';
 
 /**
  * @param response param for response.
@@ -14,11 +14,11 @@ export interface IResponseSyntex {
   message: string;
   body?: any;
   key?: string;
-  status?: "success" | "error" | "warn" | "unkown";
+  status?: 'success' | 'error' | 'warn' | 'unkown';
 }
 
-declare module "koa" {
-  interface BaseContext {
+declare module 'koa' {
+  export default interface BaseContext {
     sendResponse: (response: IResponseSyntex) => void;
     connection: DynamoDBDocumentClient;
   }

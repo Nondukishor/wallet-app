@@ -3,13 +3,13 @@
  **All nessary modules import start from here**
  **********************************************
  */
-import Koa from "koa";
-import bodyparser from "koa-bodyparser";
-import router from "./routes";
-import config from "./config";
-import { unmarshall } from "@aws-sdk/util-dynamodb";
-import { IResponseSyntex } from "./types/globalTypes";
-import cors from "@koa/cors";
+import { unmarshall } from '@aws-sdk/util-dynamodb';
+import cors from '@koa/cors';
+import Koa from 'koa';
+import bodyparser from 'koa-bodyparser';
+import config from './config';
+import router from './routes';
+import { IResponseSyntex } from './types/globalTypes';
 /*
  **********************************************
  **All nessary module modules import end here**
@@ -29,14 +29,14 @@ app.context.sendResponse = function (response: IResponseSyntex) {
           code,
           message,
           status,
-          [key]: body.map((item) => unmarshall(item)),
+          [key]: body.map((item) => unmarshall(item))
         };
       } else {
         this.body = {
           code,
           message,
           status,
-          body: body.map((item) => unmarshall(item)),
+          body: body.map((item) => unmarshall(item))
         };
       }
     } else {
@@ -45,14 +45,14 @@ app.context.sendResponse = function (response: IResponseSyntex) {
           code,
           message,
           status,
-          [key]: unmarshall(body),
+          [key]: unmarshall(body)
         };
       } else {
         this.body = {
           code,
           message,
           status,
-          body: unmarshall(body),
+          body: unmarshall(body)
         };
       }
     }
@@ -60,7 +60,7 @@ app.context.sendResponse = function (response: IResponseSyntex) {
     this.body = {
       code,
       message,
-      status,
+      status
     };
   }
 };
@@ -83,5 +83,5 @@ app.use(router());
 
 //server start
 export default app.listen(config.PORT, () =>
-  console.log(`Server is running http://locahost:${config.PORT}`)
+  console.log(`Server is running http://localhost:${config.PORT}`)
 );

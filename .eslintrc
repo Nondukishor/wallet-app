@@ -3,7 +3,7 @@
       "browser": true,
       "es2021": true
     },
-    "extends": [ "koa"],
+    "extends": ["koa"],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
       "ecmaFeatures": {
@@ -15,21 +15,23 @@
     "plugins": ["@typescript-eslint", "unused-imports"],
     "rules": {
       "@typescript-eslint/no-explicit-any": "off",
-      "react/react-in-jsx-scope": ["off"],
       "react-hooks/exhaustive-deps": "off",
       "@typescript-eslint/quotes": [
         "error",
-        "double",
+        "single",
         {
           "avoidEscape": true,
           "allowTemplateLiterals": true
         }
       ],
-      "no-unused-vars": "off",
+      "no-unused-vars": "warn",
+      "arrow-parens":"warn",
       "unused-imports/no-unused-imports": "error",
       "unused-imports/no-unused-vars": ["off"],
       "@next/next/no-img-element": "off",
       "react/no-unescaped-entities": "off",
-      "@next/next/no-document-import-in-page": "off"
+      "@next/next/no-document-import-in-page": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "unused-imports/no-unused-imports-ts": "warn"
     }
   }

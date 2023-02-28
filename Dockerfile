@@ -4,17 +4,15 @@ WORKDIR /home/app/
 
 COPY package*.json ./
 
-# RUN npm install -g npm@latest
+RUN npm install -g npm@latest
+RUN npm install -g typescript
 
+ENV NODE_ENV=production
 
-RUN npm i --silent
+RUN npm ci
 
 COPY . .
 
-ENV NODE_ENV=development
+RUN npm run build
 
-EXPOSE 4000
-
-RUN npm run dynamo:createtable
-
-CMD ["npm","run", "dev"]
+CMD ["npm","run", "start"]

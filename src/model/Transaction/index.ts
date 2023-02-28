@@ -1,4 +1,4 @@
-import Model from "..";
+import Model from '..';
 
 export default class Transaction extends Model {
   constructor() {

@@ -13,7 +13,7 @@ export function convertToExpressionAttributeNames(arr: string[]): Record<string,
 // }
 
 export function convertToExpressionUpdateExpression(expression: string[]): string {
-  return `set ${expression.map((exp: string) => `#${exp} = :${exp}`).join(",")}`;
+  return `set ${expression.map((exp: string) => `#${exp} = :${exp}`).join(',')}`;
 }
 
 //return example : { ':name': 'raki', ':age': '20', ':address': 'Dhaka' }
@@ -29,17 +29,17 @@ export function convertToExpressionAttributeValues(
 export function pluralize(word: string, count?: number) {
   if (count === 1) {
     return word;
-  } else if (word.endsWith("y")) {
-    return word.slice(0, -1) + "ies";
+  } else if (word.endsWith('y')) {
+    return word.slice(0, -1) + 'ies';
   } else if (
-    word.endsWith("s") ||
-    word.endsWith("x") ||
-    word.endsWith("z") ||
-    word.endsWith("ch") ||
-    word.endsWith("sh")
+    word.endsWith('s') ||
+    word.endsWith('x') ||
+    word.endsWith('z') ||
+    word.endsWith('ch') ||
+    word.endsWith('sh')
   ) {
-    return word + "es";
+    return word + 'es';
   } else {
-    return word + "s";
+    return word + 's';
   }
 }

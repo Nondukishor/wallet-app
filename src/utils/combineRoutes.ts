@@ -1,5 +1,5 @@
-import Router, { IMiddleware } from "koa-router";
-import compose from "koa-compose";
+import compose from 'koa-compose';
+import Router, { IMiddleware } from 'koa-router';
 /**
  * Compose multiple instances of koa-router
  * into a single `use`-able middleware.

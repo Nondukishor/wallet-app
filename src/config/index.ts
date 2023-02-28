@@ -1,11 +1,11 @@
-import dotenv from "dotenv";
-import path from "path";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { IConfig } from "./types";
+import dotenv from 'dotenv';
+import path from 'path';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { IConfig } from './types';
 
 dotenv.config({
-  path: `${path.resolve(__dirname, "../../.env.development")}`,
+  path: `${path.resolve(__dirname, '../../.env.development')}`
 });
 
 const marshallOptions = {
@@ -14,12 +14,12 @@ const marshallOptions = {
   // Whether to remove undefined values while marshalling.
   removeUndefinedValues: false, // false, by default.
   // Whether to convert typeof object to map attribute.
-  convertClassInstanceToMap: false, // false, by default.
+  convertClassInstanceToMap: false // false, by default.
 };
 
 const unmarshallOptions = {
   // Whether to return numbers as a string instead of converting them to native JavaScript numbers.
-  wrapNumbers: false, // false, by default.
+  wrapNumbers: false // false, by default.
 };
 
 const dbconfig = {
@@ -27,19 +27,19 @@ const dbconfig = {
   region: process.env.DYNAMODB_ENDPOINT,
   credentials: {
     accessKeyId: process.env.ACCESS_KEY_ID,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  },
+    secretAccessKey: process.env.SECRET_ACCESS_KEY
+  }
 };
 
 export const client = new DynamoDBClient(dbconfig);
 export const ddbDocClient = DynamoDBDocumentClient.from(client, {
   marshallOptions,
-  unmarshallOptions,
+  unmarshallOptions
 });
 
 const config: IConfig = {
   PORT: process.env.PORT || 4000,
-  connection: ddbDocClient,
+  connection: ddbDocClient
 };
 
 //config object freeze so that nobody can change it.
